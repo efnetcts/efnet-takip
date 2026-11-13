@@ -131,6 +131,7 @@
     <div class="note">Bu liste sadece görüntülemek içindir. Yeni kayıtlar birkaç dakika gecikmeyle görünebilir.<br><a id="openFull" href="#" target="_blank" rel="noopener" style="color:#7fc4d6">Tabloyu tam ekran aç</a></div>
   </div>
 
+  <iframe name="hiddenFrame" id="hiddenFrame" style="display:none" title="gonder"></iframe>
   <footer>EFNET &bull; Cihaz Takip</footer>
 </div>
 
@@ -150,8 +151,8 @@ var CONFIG = {
     "durum": "entry.2012223575"
   }
 };
-var MARKALAR  = ["Samsung","Reeder","Toshiba","Lenovo","Huawei","Xiaomi","Apple","General Mobile","Omix","Tecno","Oppo","Realme","Casper","Vestel"];
-var ISLEMLER  = ["Ekran","Batarya","Soket","Virüs","Format","Şarj","Ses yok","Şebeke yok","Görüntü yok","Dokunmatik yok","Kamera arızası","Titreşim arızası","Kasıyor"];
+var MARKALAR  = ["Samsung","Apple","Huawei","Xiaomi","Oppo","Realme","Tecno","Lenovo","Reeder","Casper","Omix","İnfinix","Vestel","General mobile"];
+var ISLEMLER  = ["Ekran","Batarya","Soket","Şarj almıyor","Açılmıyor","Yazılım / Format / FRP","Ses Yok","Görüntü Yok","Dokunmatik Yok","Kamera Arızası","Sıvı Temas","Alt Board","Ara Film","Arka Kapak","Lens"];
 // ===========================================
 
 var $ = function(id){ return document.getElementById(id); };
@@ -260,9 +261,17 @@ $("f").addEventListener("submit", function(e){
   p.append("fvv","1"); p.append("pageHistory","0");
 
   var btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Gönderiliyor...";
-  fetch(CONFIG.action, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body:p.toString() })
-    .then(function(){ show("doneScreen"); })
-    .catch(function(){ err.textContent = "Gönderilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin."; btn.disabled = false; btn.textContent = "Kaydet"; });
+  // Klasik form gönderimi: gizli bir çerçeveye POST edilir, tarayıcı normal form gibi davranır.
+  var fr = $("hiddenFrame");
+  var fm = document.createElement("form");
+  fm.method = "POST"; fm.action = CONFIG.action; fm.target = "hiddenFrame"; fm.acceptCharset = "UTF-8"; fm.style.display = "none";
+  p.forEach(function(v, k){ var i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; fm.appendChild(i); });
+  document.body.appendChild(fm);
+  var finished = false;
+  function ok(){ if (finished) return; finished = true; document.body.removeChild(fm); show("doneScreen"); }
+  fr.onload = ok;
+  setTimeout(ok, 6000);
+  fm.submit();
 });
 </script>
 </body>
