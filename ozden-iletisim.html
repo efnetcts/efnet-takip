@@ -101,8 +101,12 @@
       <div class="q"><label for="aciklama">Açıklama <span class="opt">(isteğe bağlı)</span></label>
         <textarea id="aciklama" placeholder="Ek not"></textarea></div>
 
-      <div class="q"><label for="fiyat">Fiyat (₺) <span class="opt">(sonra da girilebilir)</span></label>
-        <input type="number" id="fiyat" inputmode="decimal" min="0" placeholder="0"></div>
+      <div class="q"><label for="fiyat">Fiyat <span class="opt">(sonra da girilebilir)</span></label>
+        <input type="number" id="fiyat" inputmode="decimal" min="0" placeholder="0">
+        <div class="two" id="paraChips" style="margin-top:10px">
+          <button type="button" class="chip sel" data-v="TL">&#8378; TL</button>
+          <button type="button" class="chip" data-v="Dolar">$ Dolar</button>
+        </div></div>
 
       <div class="q"><div class="lab">Durum <span class="req">*</span></div>
         <div class="two" id="durumChips">
@@ -150,6 +154,7 @@ var CONFIG = {
     "islem": "entry.1866157020",
     "aciklama": "entry.1813492605",
     "fiyat": "entry.1991424384",
+    "para": "entry.2038705584",
     "durum": "entry.2012223575"
   }
 };
@@ -172,7 +177,7 @@ function show(id){
 }
 document.querySelectorAll(".goHome").forEach(function(b){ b.addEventListener("click", function(){ show("home"); }); });
 
-var state = { marka:"", islem:"", durum:"", markaDiger:false, islemDiger:false };
+var state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false };
 
 function buildSelect(selId, list, key, otherBoxId, otherFlag){
   var sel = $(selId);
@@ -189,6 +194,12 @@ function buildSelect(selId, list, key, otherBoxId, otherFlag){
 buildSelect("markaSel", MARKALAR, "marka", "markaOther", "markaDiger");
 buildSelect("islemSel", ISLEMLER, "islem", "islemOther", "islemDiger");
 
+document.querySelectorAll("#paraChips .chip").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("#paraChips .chip").forEach(function(c){ c.classList.remove("sel"); });
+    b.classList.add("sel"); state.para = b.getAttribute("data-v");
+  });
+});
 document.querySelectorAll("#durumChips .chip").forEach(function(b){
   b.addEventListener("click", function(){
     document.querySelectorAll("#durumChips .chip").forEach(function(c){ c.classList.remove("sel"); });
@@ -197,8 +208,9 @@ document.querySelectorAll("#durumChips .chip").forEach(function(b){
 });
 
 function resetForm(){
-  $("f").reset(); state = { marka:"", islem:"", durum:"", markaDiger:false, islemDiger:false };
+  $("f").reset(); state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false };
   document.querySelectorAll(".chip.sel").forEach(function(c){ c.classList.remove("sel"); });
+  document.querySelector("#paraChips .chip[data-v=TL]").classList.add("sel");
   $("markaSel").value=""; $("islemSel").value=""; $("markaOther").classList.remove("on"); $("islemOther").classList.remove("on");
   $("err").textContent = ""; $("sendBtn").disabled = false; $("sendBtn").textContent = "Kaydet";
 }
@@ -222,16 +234,23 @@ function parseCSV(text){
   return rows;
 }
 function render(rows){
-  var box=$("list"); var data=rows.slice(1).filter(function(r){ return r.some(function(x){return x && x.trim();}); });
+  var box=$("list");
+  var head=(rows[0]||[]).map(function(h){ return String(h||"").trim().toLowerCase(); });
+  function col(name, def){ var i=head.indexOf(name.toLowerCase()); return i>=0 ? i : def; }
+  var cT=col("Zaman damgası",0), cK=col("Kimden",1), cMa=col("Marka",2), cMo=col("Model",3), cI=col("İşlem / Parça",4),
+      cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1);
+  var data=rows.slice(1).filter(function(r){ return r.some(function(x){return x && x.trim();}); });
   if(!data.length){ box.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
   data.reverse();
   box.innerHTML=data.map(function(r){
-    var tarih=r[0]||"", kimden=(r[1]||"").trim(), marka=r[2]||"", model=r[3]||"", islem=r[4]||"", ac=r[5]||"", fiyat=(r[6]||"").trim(), durum=(r[7]||"").trim();
+    var tarih=r[cT]||"", kimden=(r[cK]||"").trim(), marka=r[cMa]||"", model=r[cMo]||"", islem=r[cI]||"", ac=r[cA]||"",
+        fiyat=(r[cF]||"").trim(), durum=(r[cD]||"").trim(), para=(cP>=0 ? (r[cP]||"").trim() : "");
+    var sym=(para.toLowerCase()==="dolar" || para==="$") ? "$" : "₺";
     var bayi=(kimden!=="EFNET");
     var paid=(durum==="Ödendi");
     var meta=esc(tarih.split(" ")[0])+" · "+esc(kimden)+(ac?" · "+esc(ac):"");
     return '<div class="rec'+(bayi?' bayi':'')+'"><div><div class="t">'+esc(marka)+" "+esc(model)+' — '+esc(islem)+'</div><div class="m">'+meta+'</div></div>'+
-      '<div class="r"><div class="p">'+(fiyat?esc(fiyat)+" ₺":'<span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span>')+'</div>'+
+      '<div class="r"><div class="p">'+(fiyat?esc(fiyat)+" "+sym:'<span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span>')+'</div>'+
       (durum?'<span class="badge '+(paid?'paid':'unpaid')+'">'+esc(durum)+'</span>':'')+'</div></div>';
   }).join("");
 }
@@ -266,7 +285,7 @@ $("f").addEventListener("submit", function(e){
   if (state.islemDiger) { p.append(E.islem, "__other_option__"); p.append(E.islem + ".other_option_response", islem); }
   else { p.append(E.islem, islem); }
   var ac = $("aciklama").value.trim(); if (ac) { p.append(E.aciklama, ac); }
-  var fy = $("fiyat").value.trim(); if (fy !== "") { p.append(E.fiyat, fy); }
+  var fy = $("fiyat").value.trim(); if (fy !== "") { p.append(E.fiyat, fy); p.append(E.para, state.para); }
   p.append(E.durum, state.durum);
   p.append("fvv","1"); p.append("pageHistory","0");
 
