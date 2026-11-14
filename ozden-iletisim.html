@@ -233,22 +233,60 @@ function parseCSV(text){
   if(cur!==""||row.length){ row.push(cur); rows.push(row); }
   return rows;
 }
+var WINDOW = 15*60*1000;
+var KEY = "efnet_" + CONFIG.action.slice(-16);
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+function norm(s){ return String(s||"").trim().toLowerCase(); }
+
+function addPending(rec){
+  var now = Date.now();
+  var arr = (lsGet(KEY+"_pend") || []).filter(function(x){ return now - x.t < WINDOW; });
+  rec.t = now; arr.push(rec); lsSet(KEY+"_pend", arr);
+}
+// Google eski kopyayı döndürürse (satır sayısı azsa) son bilinen listeyi kullan
+function stabilize(rows){
+  var now = Date.now(), saved = lsGet(KEY+"_rows");
+  if (saved && now - saved.t < WINDOW && saved.rows.length > rows.length) { return saved.rows; }
+  lsSet(KEY+"_rows", { t: now, rows: rows }); return rows;
+}
+
 function render(rows){
   var box=$("list");
   var head=(rows[0]||[]).map(function(h){ return String(h||"").trim().toLowerCase(); });
   function col(name, def){ var i=head.indexOf(name.toLowerCase()); return i>=0 ? i : def; }
   var cT=col("Zaman damgası",0), cK=col("Kimden",1), cMa=col("Marka",2), cMo=col("Model",3), cI=col("İşlem / Parça",4),
       cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1);
-  var data=rows.slice(1).filter(function(r){ return r.some(function(x){return x && x.trim();}); });
+  var data=rows.slice(1).filter(function(r){ return r.some(function(x){return x && x.trim();}); }).map(function(r){ return {r:r, pending:false}; });
+
+  // Gönderilmiş ama henüz tabloda görünmeyen kayıtları da göster
+  var now = Date.now();
+  var pend = (lsGet(KEY+"_pend") || []).filter(function(x){ return now - x.t < WINDOW; });
+  var used = {};
+  pend = pend.filter(function(pd){
+    for (var i=0;i<data.length;i++){
+      if (used[i]) continue; var r=data[i].r;
+      if (norm(r[cK])===norm(pd.kimden) && norm(r[cMa])===norm(pd.marka) && norm(r[cMo])===norm(pd.model) && norm(r[cI])===norm(pd.islem)) { used[i]=true; return false; }
+    }
+    return true;
+  });
+  lsSet(KEY+"_pend", pend);
+  pend.forEach(function(pd){
+    var r=[]; for (var i=0;i<Math.max(head.length,8);i++) r.push("");
+    r[cT]=pd.tarih; r[cK]=pd.kimden; r[cMa]=pd.marka; r[cMo]=pd.model; r[cI]=pd.islem; r[cA]=pd.aciklama; r[cF]=pd.fiyat; r[cD]=pd.durum; if (cP>=0) r[cP]=pd.para;
+    data.push({r:r, pending:true});
+  });
+
   if(!data.length){ box.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
   data.reverse();
-  box.innerHTML=data.map(function(r){
+  box.innerHTML=data.map(function(d){
+    var r=d.r;
     var tarih=r[cT]||"", kimden=(r[cK]||"").trim(), marka=r[cMa]||"", model=r[cMo]||"", islem=r[cI]||"", ac=r[cA]||"",
-        fiyat=(r[cF]||"").trim(), durum=(r[cD]||"").trim(), para=(cP>=0 ? (r[cP]||"").trim() : "");
+        fiyat=String(r[cF]||"").trim(), durum=(r[cD]||"").trim(), para=(cP>=0 ? (r[cP]||"").trim() : "");
     var sym=(para.toLowerCase()==="dolar" || para==="$") ? "$" : "₺";
     var bayi=(kimden!=="EFNET");
     var paid=(durum==="Ödendi");
-    var meta=esc(tarih.split(" ")[0])+" · "+esc(kimden)+(ac?" · "+esc(ac):"");
+    var meta=esc(tarih.split(" ")[0])+" · "+esc(kimden)+(ac?" · "+esc(ac):"")+(d.pending?" · tabloya yansıyor...":"");
     return '<div class="rec'+(bayi?' bayi':'')+'"><div><div class="t">'+esc(marka)+" "+esc(model)+' — '+esc(islem)+'</div><div class="m">'+meta+'</div></div>'+
       '<div class="r"><div class="p">'+(fiyat?esc(fiyat)+" "+sym:'<span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span>')+'</div>'+
       (durum?'<span class="badge '+(paid?'paid':'unpaid')+'">'+esc(durum)+'</span>':'')+'</div></div>';
@@ -258,8 +296,12 @@ function csvUrl(){ return CONFIG.sheet.replace("/pubhtml","/pub") + "&output=csv
 function loadList(){
   $("list").innerHTML='<div class="loading">Yükleniyor...</div>';
   fetch(csvUrl()).then(function(r){ if(!r.ok) throw new Error("http"); return r.text(); })
-    .then(function(txt){ render(parseCSV(txt)); })
-    .catch(function(){ $("list").innerHTML='<div class="empty">Liste yüklenemedi.<br>Aşağıdaki "Tabloyu tam ekran aç" bağlantısını kullanın.</div>'; });
+    .then(function(txt){ render(stabilize(parseCSV(txt))); })
+    .catch(function(){
+      var saved = lsGet(KEY+"_rows");
+      if (saved && Date.now() - saved.t < WINDOW) { render(saved.rows); }
+      else { $("list").innerHTML='<div class="empty">Liste yüklenemedi.<br>Aşağıdaki "Tabloyu tam ekran aç" bağlantısını kullanın.</div>'; }
+    });
 }
 function openView(){ $("openFull").href=CONFIG.sheet; show("viewScreen"); loadList(); }
 $("refresh").addEventListener("click", loadList);
@@ -297,7 +339,13 @@ $("f").addEventListener("submit", function(e){
   p.forEach(function(v, k){ var i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; fm.appendChild(i); });
   document.body.appendChild(fm);
   var finished = false;
-  function ok(){ if (finished) return; finished = true; document.body.removeChild(fm); show("doneScreen"); }
+  function ok(){
+    if (finished) return; finished = true; document.body.removeChild(fm);
+    var d = new Date(), z = function(n){ return (n<10?"0":"")+n; };
+    addPending({ tarih: z(d.getDate())+"."+z(d.getMonth()+1)+"."+d.getFullYear()+" "+z(d.getHours())+":"+z(d.getMinutes())+":"+z(d.getSeconds()),
+                 kimden: CONFIG.kimden, marka: marka, model: model, islem: islem, aciklama: ac, fiyat: fy, durum: state.durum, para: state.para });
+    show("doneScreen");
+  }
   fr.onload = ok;
   setTimeout(ok, 6000);
   fm.submit();
