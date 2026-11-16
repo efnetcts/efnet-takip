@@ -1,0 +1,25 @@
+{
+ "id": "/efnet-takip/nokta-iletisim.html?k=efnet",
+ "name": "EFNET Nokta",
+ "short_name": "EFNET Nokta",
+ "start_url": "./nokta-iletisim.html?k=efnet",
+ "scope": "./nokta-iletisim.html",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#000000",
+ "theme_color": "#000000",
+ "icons": [
+  {
+   "src": "icon-nokta-admin.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-nokta-admin.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

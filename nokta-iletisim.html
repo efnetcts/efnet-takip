@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EFNET - Nokta İletişim Cihaz Takip</title>
+<meta name="theme-color" content="#000000">
+<script>
+(function(){try{
+  var slug=(location.pathname.split("/").pop()||"").replace(/-iletisim\.html.*$/,"");
+  var adm=(new URLSearchParams(location.search).get("k")==="efnet");
+  if(slug){var l=document.createElement("link");l.rel="manifest";l.href=slug+"-iletisim-"+(adm?"admin":"bayi")+".webmanifest";document.head.appendChild(l);
+    var i=document.createElement("link");i.rel="apple-touch-icon";i.href="icon-"+slug+"-"+(adm?"admin":"bayi")+".png";document.head.appendChild(i);}
+}catch(e){}})();
+</script>
 <style>
   :root { --bg:#000; --card:#111418; --line:#262d37; --text:#f2f5f8; --muted:#9aa6b2; --teal:#4db6c9; --blue:#1f56c4; --ok:#1e9e5a; --bad:#d64545; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -493,6 +502,7 @@ $("f").addEventListener("submit", function(e){
   setTimeout(ok, 6000);
   fm.submit();
 });
+try { if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js"); } catch(e){}
 </script>
 </body>
 </html>
