@@ -61,7 +61,26 @@
   .rec .r { text-align:right; flex-shrink:0; }
   .rec .p { font-size:17px; font-weight:800; }
   .badge { display:inline-block; margin-top:6px; padding:4px 10px; border-radius:20px; font-size:13px; font-weight:700; color:#fff; }
-  .badge.paid { background:var(--ok); } .badge.unpaid { background:var(--bad); }
+  .badge.paid { background:var(--ok); } .badge.unpaid { background:var(--bad); } .badge.iade { background:var(--bad); }
+  .badge.t-hz { background:#d4a10a; color:#1a1400; } .badge.t-te { background:var(--ok); }
+  .rec .r .badge { margin-left:4px; }
+  .rec.edit { cursor:pointer; }
+  .ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:50; align-items:flex-end; justify-content:center; }
+  .ov.on { display:flex; }
+  .sheet { background:#11161c; border:1px solid var(--line); border-radius:18px 18px 0 0; width:100%; max-width:560px; padding:18px 16px 24px; max-height:92vh; overflow:auto; }
+  .sheet h3 { margin:0 0 4px; font-size:18px; } .sheet .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .sheet .lab2 { font-size:13px; color:var(--muted); margin:12px 0 6px; font-weight:700; }
+  .sheet input { width:100%; padding:13px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text); font-size:17px; font-family:inherit; }
+  .three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; } .two2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .sheet .chip { text-align:center; padding:13px 6px; }
+  .sheet .chip.sel.t-hz { background:#d4a10a; color:#1a1400; } .sheet .chip.sel.t-te { background:var(--ok); } .sheet .chip.sel.t-iade { background:var(--bad); }
+  .sheet .chip.sel.paid { background:var(--ok); } .sheet .chip.sel.unpaid { background:var(--bad); }
+  .sheet .btns { display:grid; grid-template-columns:1fr 2fr; gap:10px; margin-top:18px; }
+  .sheet .bayibar { text-align:center; padding:7px; border-radius:10px; background:#e08a3c; color:#1a0e00; font-weight:800; margin-bottom:12px; }
+  .sheet .btns button { padding:15px; border-radius:12px; border:1px solid var(--line); font-size:17px; font-weight:700; font-family:inherit; cursor:pointer; color:var(--text); background:var(--card); }
+  .sheet .btns .save { background:linear-gradient(135deg,var(--teal),var(--blue)); border:0; }
+  .sheet .del { grid-column:1 / -1; background:transparent !important; color:#ff8a8a !important; border:1px solid #6b2b2b !important; }
+  .sheet .emsg { color:#ff8a8a; font-size:14px; margin-top:10px; min-height:18px; }
   .empty,.loading { text-align:center; color:var(--muted); padding:30px 10px; }
   .legend { display:flex; gap:14px; justify-content:center; font-size:12.5px; color:var(--muted); margin:2px 0 12px; }
   .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
@@ -131,6 +150,7 @@
   <!-- KAYITLARI GÖRÜNTÜLE -->
   <div id="viewScreen" class="screen">
     <div class="top"><button type="button" class="goHome">&larr; Geri</button><button type="button" id="refresh">&#8635; Yenile</button></div>
+    <button type="button" id="clearCache" style="display:none;width:100%;margin:0 0 12px;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:#ffb4b4;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Hafızayı temizle (silinen kayıtlar görünüyorsa)</button>
     <h2>Kayıtlar</h2>
     <div class="legend"><span><i style="background:var(--teal)"></i>EFNET</span><span><i style="background:#e08a3c"></i>Özden İletişim</span></div>
     <div id="list"><div class="loading">Yükleniyor...</div></div>
@@ -138,7 +158,36 @@
   </div>
 
   <iframe name="hiddenFrame" id="hiddenFrame" style="display:none" title="gonder"></iframe>
-  <footer>EFNET &bull; Cihaz Takip</footer>
+  <div class="ov" id="ov"><div class="sheet">
+  <div class="bayibar" id="edBayi"></div>
+  <h3 id="edTitle"></h3><div class="sub" id="edSub"></div>
+  <div class="lab2">Kimden</div>
+  <div class="two2" id="edKimden"><button type="button" class="chip" data-v="EFNET">EFNET</button><button type="button" class="chip" id="edKimdenB"></button></div>
+  <div class="lab2">Marka</div><input id="edMarka" placeholder="Marka">
+  <div class="lab2">Model</div><input id="edModel" placeholder="Model">
+  <div class="lab2">İşlem / Parça</div><input id="edIslem" placeholder="İşlem / Parça">
+  <div class="lab2">Açıklama</div><input id="edAc" placeholder="Açıklama">
+  <div class="lab2">Teslim durumu</div>
+  <div class="three" id="edTeslim">
+    <button type="button" class="chip t-hz" data-v="Hazırlanıyor">Hazırlanıyor</button>
+    <button type="button" class="chip t-te" data-v="Teslim Edildi">Teslim Edildi</button>
+    <button type="button" class="chip t-iade" data-v="İade">İade</button>
+  </div>
+  <div class="lab2">Ödeme durumu</div>
+  <div class="two2" id="edOdeme">
+    <button type="button" class="chip unpaid" data-v="Ödenmedi">Ödenmedi</button>
+    <button type="button" class="chip paid" data-v="Ödendi">Ödendi</button>
+  </div>
+  <div class="lab2">Fiyat</div>
+  <input id="edFiyat" inputmode="decimal" placeholder="Fiyat">
+  <div class="two2" id="edPara" style="margin-top:8px">
+    <button type="button" class="chip" data-v="TL">TL</button>
+    <button type="button" class="chip" data-v="Dolar">Dolar</button>
+  </div>
+  <div class="emsg" id="edErr"></div>
+  <div class="btns"><button type="button" id="edCancel">Vazgeç</button><button type="button" class="save" id="edSave">Kaydet</button><button type="button" class="del" id="edDel">Bu kaydı sil</button></div>
+</div></div>
+<footer>EFNET &bull; Cihaz Takip</footer>
 </div>
 
 <script>
@@ -146,6 +195,7 @@
 var CONFIG = {
   "action": "https://docs.google.com/forms/d/e/1FAIpQLSfymPh6Mbtz6jrkf0CxtgYihtFII4DcdH1I7WrpE4T5tFx1-w/formResponse",
   "kimden": "Özden İletişim",
+  "api": "https://script.google.com/macros/s/AKfycbyTPcENiaB-1qaq7GWRfaKVERxSFtrW4pkHV_2YQI_Zv4KvyWs4ryBZWMu9hxjGPL76/exec",
   "sheet": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVWsqQrttFjaqqZoTrO_M9GV9Z-nWrc-0d2xwIXpjBjc7GU2dPAM0Ws1XqiOsztJ9UIruf5OAkXMJQ/pubhtml?gid=1583082910&single=true",
   "entries": {
     "kimden": "entry.1027503689",
@@ -165,8 +215,10 @@ var ISLEMLER  = ["Ekran","Batarya","Soket","Şarj almıyor","Açılmıyor","Yaz�
 var ADMIN = false;
 try { ADMIN = (new URLSearchParams(location.search).get("k") === "efnet"); } catch(e) {}
 var $ = function(id){ return document.getElementById(id); };
+var BAYI = CONFIG.kimden;
 if (ADMIN) {
   CONFIG.kimden = "EFNET";
+  document.body.classList.add("admin");
   $("adminBadge").style.display = "block";
   $("title").textContent = "EFNET - " + $("title").textContent;
   document.title = "EFNET girişi - " + document.title;
@@ -251,13 +303,15 @@ function stabilize(rows){
   lsSet(KEY+"_rows", { t: now, rows: rows }); return rows;
 }
 
+var ST={}, lastData=[], editing=null, BAYI_ADI=BAYI;
 function render(rows){
   var box=$("list");
   var head=(rows[0]||[]).map(function(h){ return String(h||"").trim().toLowerCase(); });
   function col(name, def){ var i=head.indexOf(name.toLowerCase()); return i>=0 ? i : def; }
   var cT=col("Zaman damgası",0), cK=col("Kimden",1), cMa=col("Marka",2), cMo=col("Model",3), cI=col("İşlem / Parça",4),
-      cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1);
-  var data=rows.slice(1).filter(function(r){ return r.some(function(x){return x && x.trim();}); }).map(function(r){ return {r:r, pending:false}; });
+      cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1), cTe=col("Teslim Durumu",-1);
+  var data=rows.slice(1).map(function(r,i){ return {r:r, pending:false, row:i+2}; }).filter(function(d){ return d.r.some(function(x){return x && String(x).trim();}); });
+  ST = {cT:cT,cK:cK,cMa:cMa,cMo:cMo,cI:cI,cA:cA,cF:cF,cD:cD,cP:cP,cTe:cTe};
 
   // Gönderilmiş ama henüz tabloda görünmeyen kayıtları da göster
   var now = Date.now();
@@ -278,24 +332,32 @@ function render(rows){
   });
 
   if(!data.length){ box.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
-  data.reverse();
-  box.innerHTML=data.map(function(d){
+  data.reverse(); lastData=data;
+  box.innerHTML=data.map(function(d,ix){
     var r=d.r;
     var tarih=r[cT]||"", kimden=(r[cK]||"").trim(), marka=r[cMa]||"", model=r[cMo]||"", islem=r[cI]||"", ac=r[cA]||"",
         fiyat=String(r[cF]||"").trim(), durum=(r[cD]||"").trim(), para=(cP>=0 ? (r[cP]||"").trim() : "");
     var sym=(para.toLowerCase()==="dolar" || para==="$") ? "$" : "₺";
     var bayi=(kimden!=="EFNET");
     var paid=(durum==="Ödendi");
+    var te=(cTe>=0 ? String(r[cTe]||"").trim() : "") || (CONFIG.api ? "Hazırlanıyor" : "");
+    var tcls=(te==="İade"?"iade":(te==="Teslim Edildi"?"t-te":"t-hz"));
+    var canEdit = (ADMIN && CONFIG.api && !d.pending && d.row);
     var meta=esc(tarih.split(" ")[0])+" · "+esc(kimden)+(ac?" · "+esc(ac):"")+(d.pending?" · tabloya yansıyor...":"");
-    return '<div class="rec'+(bayi?' bayi':'')+'"><div><div class="t">'+esc(marka)+" "+esc(model)+' — '+esc(islem)+'</div><div class="m">'+meta+'</div></div>'+
+    return '<div class="rec'+(bayi?' bayi':'')+(canEdit?' edit" data-ix="'+ix:'')+'"><div><div class="t">'+esc(marka)+" "+esc(model)+' — '+esc(islem)+'</div><div class="m">'+meta+'</div></div>'+
       '<div class="r"><div class="p">'+(fiyat?esc(fiyat)+" "+sym:'<span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span>')+'</div>'+
-      (durum?'<span class="badge '+(paid?'paid':'unpaid')+'">'+esc(durum)+'</span>':'')+'</div></div>';
+      (te?'<span class="badge '+tcls+'">'+esc(te)+'</span>':'')+(durum && te!=="İade"?'<span class="badge '+(paid?'paid':'unpaid')+'">'+esc(durum)+'</span>':'')+'</div></div>';
   }).join("");
 }
 function csvUrl(){ return CONFIG.sheet.replace("/pubhtml","/pub") + "&output=csv&_=" + Date.now(); }
 function loadList(){
   $("list").innerHTML='<div class="loading">Yükleniyor...</div>';
-  fetch(csvUrl()).then(function(r){ if(!r.ok) throw new Error("http"); return r.text(); })
+  var src = CONFIG.api ? fetch(CONFIG.api + "?action=list&_=" + Date.now()).then(function(r){ return r.json(); }).then(function(j){
+      if(!j || !j.ok) throw new Error("api"); render(j.rows); return null; }).catch(function(){ return fetchCsv(); }) : fetchCsv();
+  return src;
+}
+function fetchCsv(){
+  return fetch(csvUrl()).then(function(r){ if(!r.ok) throw new Error("http"); return r.text(); })
     .then(function(txt){ render(stabilize(parseCSV(txt))); })
     .catch(function(){
       var saved = lsGet(KEY+"_rows");
@@ -303,8 +365,89 @@ function loadList(){
       else { $("list").innerHTML='<div class="empty">Liste yüklenemedi.<br>Aşağıdaki "Tabloyu tam ekran aç" bağlantısını kullanın.</div>'; }
     });
 }
+
+// ---- Kayıt düzenleme (sadece EFNET girişi + Apps Script) ----
+var ed = { teslim:"", odeme:"", para:"TL", kimden:"" };
+function selChip(group, val){
+  document.querySelectorAll(group+" .chip").forEach(function(c){ c.classList.toggle("sel", c.getAttribute("data-v")===val); });
+}
+$("edKimdenB").textContent=BAYI; $("edKimdenB").setAttribute("data-v", BAYI); $("edBayi").textContent="BAYİ: "+BAYI.toUpperCase();
+["#edKimden","#edTeslim","#edOdeme","#edPara"].forEach(function(g){
+  document.querySelectorAll(g+" .chip").forEach(function(b){
+    b.addEventListener("click", function(){
+      var v=b.getAttribute("data-v");
+      if(g==="#edKimden") ed.kimden=v; else if(g==="#edTeslim") ed.teslim=v; else if(g==="#edOdeme") ed.odeme=v; else ed.para=v;
+      selChip(g, v);
+    });
+  });
+});
+$("list").addEventListener("click", function(e){
+  var el=e.target; while(el && el!==this && !(el.getAttribute && el.getAttribute("data-ix")!==null)) el=el.parentNode;
+  if(!el || el===this) return;
+  var d=lastData[parseInt(el.getAttribute("data-ix"),10)]; if(!d) return;
+  var r=d.r; editing=d;
+  $("edTitle").textContent=(r[ST.cMa]||"")+" "+(r[ST.cMo]||"")+" — "+(r[ST.cI]||"");
+  $("edSub").textContent=String(r[ST.cT]||"").split(" ")[0]+" · "+(r[ST.cK]||"");
+  ed.kimden=(String(r[ST.cK]||"").trim()==="EFNET")?"EFNET":BAYI_ADI; selChip("#edKimden",ed.kimden);
+  ed.teslim=((ST.cTe>=0 ? String(r[ST.cTe]||"").trim() : "")||"Hazırlanıyor");
+  ed.odeme=String(r[ST.cD]||"").trim()||"Ödenmedi";
+  ed.para=(ST.cP>=0 && /dolar|\$/i.test(String(r[ST.cP]||"")))?"Dolar":"TL";
+  $("edFiyat").value=String(r[ST.cF]||"").trim();
+  $("edMarka").value=String(r[ST.cMa]||"").trim(); $("edModel").value=String(r[ST.cMo]||"").trim();
+  $("edIslem").value=String(r[ST.cI]||"").trim(); $("edAc").value=String(r[ST.cA]||"").trim();
+  selChip("#edTeslim",ed.teslim); selChip("#edOdeme",ed.odeme); selChip("#edPara",ed.para);
+  $("edErr").textContent=""; $("ov").classList.add("on");
+});
+$("edCancel").addEventListener("click", function(){ $("ov").classList.remove("on"); editing=null; });
+$("edDel").addEventListener("click", function(){
+  if(!editing) return;
+  var r=editing.r;
+  if(!window.confirm(BAYI+" tablosundan SİLİNECEK:\n\n"+(r[ST.cMa]||"")+" "+(r[ST.cMo]||"")+" — "+(r[ST.cI]||"")+"\n\nEmin misiniz?")) return;
+  var pin=getPin(false); if(!pin) return;
+  var btn=$("edDel"); btn.disabled=true; btn.textContent="Siliniyor...";
+  fetch(CONFIG.api, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"delete", pin:pin, row:editing.row, tarih:String(r[ST.cT]||"")}) })
+    .then(function(x){ return x.json(); })
+    .then(function(j){
+      btn.disabled=false; btn.textContent="Bu kaydı sil";
+      if(j && j.ok){ $("ov").classList.remove("on"); editing=null; try{ localStorage.removeItem(KEY+"_rows"); }catch(e){} loadList(); }
+      else if(j && j.error==="pin"){ lsSet("efnet_pin", null); $("edErr").textContent="Şifre yanlış."; }
+      else if(j && j.error==="changed"){ $("edErr").textContent="Tablo değişmiş. Listeyi yenileyin."; }
+      else { $("edErr").textContent="Silinemedi: "+((j&&j.error)||"hata"); }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent="Bu kaydı sil"; $("edErr").textContent="Bağlantı hatası."; });
+});
+function getPin(force){
+  var p = force ? null : lsGet("efnet_pin");
+  if(!p){ p = window.prompt("EFNET şifresi:"); if(p) lsSet("efnet_pin", p); }
+  return p;
+}
+$("edSave").addEventListener("click", function(){
+  if(!editing) return;
+  if(!$("edMarka").value.trim() || !$("edModel").value.trim() || !$("edIslem").value.trim()){ $("edErr").textContent="Marka, model ve işlem boş olamaz."; return; }
+  var pin=getPin(false); if(!pin) return;
+  var btn=$("edSave"); btn.disabled=true; btn.textContent="Kaydediliyor...";
+  var body={ action:"update", pin:pin, row:editing.row, tarih:String(editing.r[ST.cT]||""),
+             updates:{ kimden:ed.kimden, marka:$("edMarka").value.trim(), model:$("edModel").value.trim(), islem:$("edIslem").value.trim(), aciklama:$("edAc").value.trim(), teslim:ed.teslim, durum:ed.odeme, fiyat:$("edFiyat").value.trim(), para:ed.para } };
+  fetch(CONFIG.api, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      btn.disabled=false; btn.textContent="Kaydet";
+      if(j && j.ok){ $("ov").classList.remove("on"); editing=null; loadList(); }
+      else {
+        if(j && j.error==="pin"){ lsSet("efnet_pin", null); $("edErr").textContent="Şifre yanlış. Tekrar Kaydet'e basıp doğru şifreyi girin."; }
+        else if(j && j.error==="changed"){ $("edErr").textContent="Tablo değişmiş. Listeyi yenileyip tekrar deneyin."; }
+        else { $("edErr").textContent="Kaydedilemedi: "+((j&&j.error)||"bilinmeyen hata"); }
+      }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent="Kaydet"; $("edErr").textContent="Bağlantı hatası. Tekrar deneyin."; });
+});
 function openView(){ $("openFull").href=CONFIG.sheet; show("viewScreen"); loadList(); }
 $("refresh").addEventListener("click", loadList);
+if (ADMIN) { $("clearCache").style.display = "block"; }
+$("clearCache").addEventListener("click", function(){
+  try { localStorage.removeItem(KEY+"_rows"); localStorage.removeItem(KEY+"_pend"); } catch(e){}
+  loadList();
+});
 $("goView").addEventListener("click", openView);
 $("doneView").addEventListener("click", openView);
 
