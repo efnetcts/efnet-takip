@@ -69,6 +69,18 @@
   .rec .m { font-size:13px; color:var(--muted); margin-top:3px; line-height:1.4; }
   .rec .r { text-align:right; flex-shrink:0; }
   .rec .p { font-size:17px; font-weight:800; }
+  .rec .p.pos { color:#3ddc84; } .rec .p.neg { color:#ff6b6b; }
+  .sumgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .scard { border-radius:16px; padding:13px 14px; color:#fff; }
+  .scard.gal { background:linear-gradient(135deg,#1f9d57,#178246); } .scard.ver { background:linear-gradient(135deg,#d64545,#b83636); }
+  .scard .k { font-size:13px; font-weight:800; letter-spacing:.4px; } .scard .v { font-size:22px; font-weight:800; margin-top:4px; line-height:1.25; }
+  .netrow { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 14px; margin-bottom:12px; font-size:15px; }
+  .netrow b.pos { color:#3ddc84; } .netrow b.neg { color:#ff6b6b; }
+  .tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .tabs button { flex:1; padding:11px 4px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .tabs button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .two .chip.sel.yal, .sheet .chip.sel.yal { background:var(--ok); } .two .chip.sel.ybo, .sheet .chip.sel.ybo { background:var(--bad); }
+  .two .chip.yaz, .sheet .chip.yaz { line-height:1.3; }
   .badge { display:inline-block; margin-top:6px; padding:4px 10px; border-radius:20px; font-size:13px; font-weight:700; color:#fff; }
   .badge.paid { background:var(--ok); } .badge.unpaid { background:var(--bad); } .badge.iade { background:var(--bad); }
   .badge.t-hz { background:#d4a10a; color:#1a1400; } .badge.t-te { background:var(--ok); }
@@ -137,6 +149,13 @@
           <button type="button" class="chip" data-v="Dolar">$ Dolar</button>
         </div></div>
 
+      <div class="q" id="yonQ"><div class="lab">Ne oldu? <span class="req">*</span></div>
+        <div class="two" id="yonChips">
+          <button type="button" class="chip yal yaz" id="yonA"></button>
+          <button type="button" class="chip ybo yaz" id="yonB"></button>
+        </div>
+        <div class="note" id="yonNote" style="text-align:left">Seçmeden kaydedilmez</div></div>
+
       <div class="q"><div class="lab">Durum <span class="req">*</span></div>
         <div class="two" id="durumChips">
           <button type="button" class="chip unpaid" data-v="Ödenmedi">Ödenmedi</button>
@@ -163,6 +182,8 @@
     <button type="button" id="clearCache" style="display:none;width:100%;margin:0 0 12px;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:#ffb4b4;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Hafızayı temizle (silinen kayıtlar görünüyorsa)</button>
     <h2>Kayıtlar</h2>
     <div class="legend"><span><i style="background:var(--teal)"></i>EFNET</span><span><i style="background:#e08a3c"></i>Özden İletişim</span></div>
+    <div class="tabs" id="tabs"><button type="button" data-f="open" class="on">Ödenmemiş</button><button type="button" data-f="all">Tümü</button><button type="button" data-f="paid">Ödendi</button></div>
+    <div id="summary"></div>
     <div id="list"><div class="loading">Yükleniyor...</div></div>
     <div class="note">Bu liste sadece görüntülemek içindir. Yeni kayıtlar birkaç dakika gecikmeyle görünebilir.<br><a id="openFull" href="#" target="_blank" rel="noopener" style="color:#7fc4d6">Tabloyu tam ekran aç</a></div>
   </div>
@@ -194,6 +215,8 @@
     <button type="button" class="chip" data-v="TL">TL</button>
     <button type="button" class="chip" data-v="Dolar">Dolar</button>
   </div>
+  <div id="edYonBox"><div class="lab2">Ne oldu?</div>
+  <div class="two2" id="edYon"><button type="button" class="chip yal yaz"></button><button type="button" class="chip ybo yaz"></button></div></div>
   <div class="emsg" id="edErr"></div>
   <div class="btns"><button type="button" id="edCancel">Vazgeç</button><button type="button" class="save" id="edSave">Kaydet</button><button type="button" class="del" id="edDel">Bu kaydı sil</button></div>
 </div></div>
@@ -207,6 +230,8 @@ var CONFIG = {
   "kimden": "Özden İletişim",
   "api": "https://script.google.com/macros/s/AKfycbyTPcENiaB-1qaq7GWRfaKVERxSFtrW4pkHV_2YQI_Zv4KvyWs4ryBZWMu9hxjGPL76/exec",
   "sheet": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVWsqQrttFjaqqZoTrO_M9GV9Z-nWrc-0d2xwIXpjBjc7GU2dPAM0Ws1XqiOsztJ9UIruf5OAkXMJQ/pubhtml?gid=1583082910&single=true",
+  "kisa_e": "Özden'e",
+  "kisa_den": "Özden'den",
   "entries": {
     "kimden": "entry.1027503689",
     "marka": "entry.1489789237",
@@ -215,7 +240,8 @@ var CONFIG = {
     "aciklama": "entry.1813492605",
     "fiyat": "entry.1991424384",
     "para": "entry.2038705584",
-    "durum": "entry.2012223575"
+    "durum": "entry.2012223575",
+    "yon": "entry.691229117"
   }
 };
 var MARKALAR  = ["Samsung","Apple","Huawei","Xiaomi","Oppo","Realme","Tecno","Lenovo","Reeder","Casper","Omix","İnfinix","Vestel","General mobile"];
@@ -234,13 +260,25 @@ if (ADMIN) {
   $("title").textContent = "EFNET - " + $("title").textContent;
   document.title = "EFNET girişi - " + document.title;
 }
+var YON_ON = !!(CONFIG.entries && CONFIG.entries.yon);
+// Yön her zaman EFNET açısından saklanır: "Alacak" = bayi EFNET'e borçlu, "Borç" = EFNET bayiye borçlu
+var YL = ADMIN ? { a:(CONFIG.kisa_e||BAYI)+"<br>yaptım / verdim", av:"Alacak", b:(CONFIG.kisa_den||BAYI)+"<br>aldım / yaptırdım", bv:"Borç" }
+               : { a:"EFNET'e<br>yaptım / verdim", av:"Borç", b:"EFNET'ten<br>aldım / yaptırdım", bv:"Alacak" };
 function show(id){
   ["home","newScreen","doneScreen","viewScreen"].forEach(function(s){ $(s).classList.remove("on"); });
   $(id).classList.add("on"); window.scrollTo(0,0);
 }
 document.querySelectorAll(".goHome").forEach(function(b){ b.addEventListener("click", function(){ show("home"); }); });
 
-var state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false };
+var state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false, yon:"" };
+$("yonA").innerHTML=YL.a; $("yonB").innerHTML=YL.b;
+if(!YON_ON){ $("yonQ").style.display="none"; $("edYonBox").style.display="none"; }
+function updSend(){
+  $("sendBtn").disabled = (YON_ON && !state.yon);
+  $("yonNote").style.display = (YON_ON && !state.yon) ? "block" : "none";
+}
+$("yonA").addEventListener("click", function(){ state.yon=YL.av; $("yonA").classList.add("sel"); $("yonB").classList.remove("sel"); updSend(); });
+$("yonB").addEventListener("click", function(){ state.yon=YL.bv; $("yonB").classList.add("sel"); $("yonA").classList.remove("sel"); updSend(); });
 
 function buildSelect(selId, list, key, otherBoxId, otherFlag){
   var sel = $(selId);
@@ -271,11 +309,11 @@ document.querySelectorAll("#durumChips .chip").forEach(function(b){
 });
 
 function resetForm(){
-  $("f").reset(); state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false };
+  $("f").reset(); state = { marka:"", islem:"", durum:"", para:"TL", markaDiger:false, islemDiger:false, yon:"" };
   document.querySelectorAll(".chip.sel").forEach(function(c){ c.classList.remove("sel"); });
   document.querySelector("#paraChips .chip[data-v=TL]").classList.add("sel");
   $("markaSel").value=""; $("islemSel").value=""; $("markaOther").classList.remove("on"); $("islemOther").classList.remove("on");
-  $("err").textContent = ""; $("sendBtn").disabled = false; $("sendBtn").textContent = "Kaydet";
+  $("err").textContent = ""; $("sendBtn").textContent = "Kaydet"; updSend();
 }
 
 $("goNew").addEventListener("click", function(){ resetForm(); show("newScreen"); });
@@ -314,15 +352,17 @@ function stabilize(rows){
   lsSet(KEY+"_rows", { t: now, rows: rows }); return rows;
 }
 
-var ST={}, lastData=[], editing=null, BAYI_ADI=BAYI;
+var ST={}, lastData=[], editing=null, BAYI_ADI=BAYI, viewFilter="open", lastRaw=null;
 function render(rows){
   var box=$("list");
   var head=(rows[0]||[]).map(function(h){ return String(h||"").trim().toLowerCase(); });
   function col(name, def){ var i=head.indexOf(name.toLowerCase()); return i>=0 ? i : def; }
   var cT=col("Zaman damgası",0), cK=col("Kimden",1), cMa=col("Marka",2), cMo=col("Model",3), cI=col("İşlem / Parça",4),
-      cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1), cTe=col("Teslim Durumu",-1);
+      cA=col("Açıklama",5), cF=col("Fiyat",6), cD=col("Durum",7), cP=col("Para Birimi",-1), cTe=col("Teslim Durumu",-1), cY=col("Yön",-1);
   var data=rows.slice(1).map(function(r,i){ return {r:r, pending:false, row:i+2}; }).filter(function(d){ return d.r.some(function(x){return x && String(x).trim();}); });
-  ST = {cT:cT,cK:cK,cMa:cMa,cMo:cMo,cI:cI,cA:cA,cF:cF,cD:cD,cP:cP,cTe:cTe};
+  ST = {cT:cT,cK:cK,cMa:cMa,cMo:cMo,cI:cI,cA:cA,cF:cF,cD:cD,cP:cP,cTe:cTe,cY:cY};
+  lastRaw = rows;
+  document.querySelectorAll("#tabs button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-f")===viewFilter); });
 
   // Gönderilmiş ama henüz tabloda görünmeyen kayıtları da göster
   var now = Date.now();
@@ -338,28 +378,65 @@ function render(rows){
   lsSet(KEY+"_pend", pend);
   pend.forEach(function(pd){
     var r=[]; for (var i=0;i<Math.max(head.length,8);i++) r.push("");
-    r[cT]=pd.tarih; r[cK]=pd.kimden; r[cMa]=pd.marka; r[cMo]=pd.model; r[cI]=pd.islem; r[cA]=pd.aciklama; r[cF]=pd.fiyat; r[cD]=pd.durum; if (cP>=0) r[cP]=pd.para;
+    r[cT]=pd.tarih; r[cK]=pd.kimden; r[cMa]=pd.marka; r[cMo]=pd.model; r[cI]=pd.islem; r[cA]=pd.aciklama; r[cF]=pd.fiyat; r[cD]=pd.durum; if (cP>=0) r[cP]=pd.para; if (cY>=0) r[cY]=pd.yon||"";
     data.push({r:r, pending:true});
   });
 
-  if(!data.length){ box.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
-  data.reverse(); lastData=data;
-  box.innerHTML=data.map(function(d,ix){
+  if(!data.length){ $("summary").innerHTML=""; lastData=[]; box.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
+  data.reverse();
+  var tot = { gal:{TL:0,USD:0}, ver:{TL:0,USD:0} };
+  data.forEach(function(d){
+    var r=d.r, kimden=String(r[cK]||"").trim(), durum=String(r[cD]||"").trim();
+    var para=(cP>=0 ? String(r[cP]||"").trim() : "");
+    var te=(cTe>=0 ? String(r[cTe]||"").trim() : "");
+    var yon=(cY>=0 ? String(r[cY]||"").trim() : "");
+    if (yon!=="Alacak" && yon!=="Borç") { yon = (kimden==="EFNET") ? "Alacak" : "Borç"; }
+    var amt=parseFloat(String(r[cF]||"").replace(",", "."));
+    d.cur=(para.toLowerCase()==="dolar" || para==="$") ? "USD" : "TL";
+    d.amt=(isNaN(amt) || amt<=0) ? 0 : amt;
+    d.plus = ADMIN ? (yon==="Alacak") : (yon==="Borç");   // bakan kişi açısından: alacak mı
+    d.paid=(durum==="Ödendi"); d.iade=(te==="İade"); d.open=(!d.paid && !d.iade);
+    if (d.open && d.amt>0) { tot[d.plus?"gal":"ver"][d.cur]+=d.amt; }
+  });
+  function fm(n){ return n.toLocaleString("tr-TR",{maximumFractionDigits:2}); }
+  function lines(o){ var a=[]; if(o.TL>0) a.push(fm(o.TL)+" ₺"); if(o.USD>0) a.push(fm(o.USD)+" $"); return a.length ? a.join("<br>") : "0"; }
+  function net(n, sym){ var c=n>0?"pos":(n<0?"neg":""); var sg=n>0?"+":(n<0?"−":""); return '<span>Net '+(sym==="₺"?"TL":"Dolar")+' <b class="'+c+'">'+sg+fm(Math.abs(n))+' '+sym+'</b></span>'; }
+  var nets=[];
+  if (tot.gal.TL>0 || tot.ver.TL>0) nets.push(net(tot.gal.TL-tot.ver.TL,"₺"));
+  if (tot.gal.USD>0 || tot.ver.USD>0) nets.push(net(tot.gal.USD-tot.ver.USD,"$"));
+  $("summary").innerHTML = '<div class="sumgrid"><div class="scard gal"><div class="k">ALINACAK</div><div class="v">'+lines(tot.gal)+'</div></div>'+
+    '<div class="scard ver"><div class="k">VERİLECEK</div><div class="v">'+lines(tot.ver)+'</div></div></div>'+
+    (nets.length ? '<div class="netrow">'+nets.join("")+'</div>' : "");
+
+  var shown=data.filter(function(d){ return viewFilter==="all" ? true : (viewFilter==="paid" ? d.paid : d.open); });
+  lastData=shown;
+  if(!shown.length){ box.innerHTML='<div class="empty">Bu sekmede kayıt yok.</div>'; return; }
+  box.innerHTML=shown.map(function(d,ix){
     var r=d.r;
     var tarih=r[cT]||"", kimden=(r[cK]||"").trim(), marka=r[cMa]||"", model=r[cMo]||"", islem=r[cI]||"", ac=r[cA]||"",
-        fiyat=String(r[cF]||"").trim(), durum=(r[cD]||"").trim(), para=(cP>=0 ? (r[cP]||"").trim() : "");
-    var sym=(para.toLowerCase()==="dolar" || para==="$") ? "$" : "₺";
+        fiyat=String(r[cF]||"").trim(), durum=(r[cD]||"").trim();
+    var sym=(d.cur==="USD") ? "$" : "₺";
     var bayi=(kimden!=="EFNET");
     var paid=(durum==="Ödendi");
     var te=(cTe>=0 ? String(r[cTe]||"").trim() : "") || (CONFIG.api ? "Hazırlanıyor" : "");
     var tcls=(te==="İade"?"iade":(te==="Teslim Edildi"?"t-te":"t-hz"));
     var canEdit = (ADMIN && CONFIG.api && !d.pending && d.row);
     var meta=esc(tarih.split(" ")[0])+" · "+esc(kimden)+(ac?" · "+esc(ac):"")+(d.pending?" · tabloya yansıyor...":"");
+    var price;
+    if (d.amt>0) { price='<div class="p '+(d.plus?'pos':'neg')+'">'+(d.plus?"+":"−")+fm(d.amt)+" "+sym+'</div>'; }
+    else if (fiyat) { price='<div class="p">'+esc(fiyat)+'</div>'; }
+    else { price='<div class="p"><span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span></div>'; }
     return '<div class="rec'+(bayi?' bayi':'')+(canEdit?' edit" data-ix="'+ix:'')+'"><div><div class="t">'+esc(marka)+" "+esc(model)+' — '+esc(islem)+'</div><div class="m">'+meta+'</div></div>'+
-      '<div class="r"><div class="p">'+(fiyat?esc(fiyat)+" "+sym:'<span style="color:var(--muted);font-weight:500;font-size:13px">Fiyat yok</span>')+'</div>'+
+      '<div class="r">'+price+
       (te?'<span class="badge '+tcls+'">'+esc(te)+'</span>':'')+(durum && te!=="İade"?'<span class="badge '+(paid?'paid':'unpaid')+'">'+esc(durum)+'</span>':'')+'</div></div>';
   }).join("");
 }
+$("tabs").addEventListener("click", function(e){
+  var b=e.target; while(b && b!==this && b.tagName!=="BUTTON") b=b.parentNode;
+  if(!b || b===this) return;
+  viewFilter=b.getAttribute("data-f");
+  if (lastRaw) render(lastRaw);
+});
 function csvUrl(){ return CONFIG.sheet.replace("/pubhtml","/pub") + "&output=csv&_=" + Date.now(); }
 function loadList(){
   $("list").innerHTML='<div class="loading">Yükleniyor...</div>';
@@ -378,16 +455,17 @@ function fetchCsv(){
 }
 
 // ---- Kayıt düzenleme (sadece EFNET girişi + Apps Script) ----
-var ed = { teslim:"", odeme:"", para:"TL", kimden:"" };
+var ed = { teslim:"", odeme:"", para:"TL", kimden:"", yon:"" };
 function selChip(group, val){
   document.querySelectorAll(group+" .chip").forEach(function(c){ c.classList.toggle("sel", c.getAttribute("data-v")===val); });
 }
 $("edKimdenB").textContent=BAYI; $("edKimdenB").setAttribute("data-v", BAYI); $("edBayi").textContent="BAYİ: "+BAYI.toUpperCase();
-["#edKimden","#edTeslim","#edOdeme","#edPara"].forEach(function(g){
+(function(){ var bs=document.querySelectorAll("#edYon .chip"); bs[0].innerHTML=YL.a; bs[0].setAttribute("data-v",YL.av); bs[1].innerHTML=YL.b; bs[1].setAttribute("data-v",YL.bv); })();
+["#edKimden","#edTeslim","#edOdeme","#edPara","#edYon"].forEach(function(g){
   document.querySelectorAll(g+" .chip").forEach(function(b){
     b.addEventListener("click", function(){
       var v=b.getAttribute("data-v");
-      if(g==="#edKimden") ed.kimden=v; else if(g==="#edTeslim") ed.teslim=v; else if(g==="#edOdeme") ed.odeme=v; else ed.para=v;
+      if(g==="#edKimden") ed.kimden=v; else if(g==="#edYon") ed.yon=v; else if(g==="#edTeslim") ed.teslim=v; else if(g==="#edOdeme") ed.odeme=v; else ed.para=v;
       selChip(g, v);
     });
   });
@@ -407,6 +485,7 @@ $("list").addEventListener("click", function(e){
   $("edMarka").value=String(r[ST.cMa]||"").trim(); $("edModel").value=String(r[ST.cMo]||"").trim();
   $("edIslem").value=String(r[ST.cI]||"").trim(); $("edAc").value=String(r[ST.cA]||"").trim();
   selChip("#edTeslim",ed.teslim); selChip("#edOdeme",ed.odeme); selChip("#edPara",ed.para);
+  ed.yon = d.plus ? "Alacak" : "Borç"; selChip("#edYon", ed.yon);
   $("edErr").textContent=""; $("ov").classList.add("on");
 });
 $("edCancel").addEventListener("click", function(){ $("ov").classList.remove("on"); editing=null; });
@@ -438,7 +517,7 @@ $("edSave").addEventListener("click", function(){
   var pin=getPin(false); if(!pin) return;
   var btn=$("edSave"); btn.disabled=true; btn.textContent="Kaydediliyor...";
   var body={ action:"update", pin:pin, row:editing.row, tarih:String(editing.r[ST.cT]||""),
-             updates:{ kimden:ed.kimden, marka:$("edMarka").value.trim(), model:$("edModel").value.trim(), islem:$("edIslem").value.trim(), aciklama:$("edAc").value.trim(), teslim:ed.teslim, durum:ed.odeme, fiyat:$("edFiyat").value.trim(), para:ed.para } };
+             updates:{ yon:(YON_ON?ed.yon:undefined), kimden:ed.kimden, marka:$("edMarka").value.trim(), model:$("edModel").value.trim(), islem:$("edIslem").value.trim(), aciklama:$("edAc").value.trim(), teslim:ed.teslim, durum:ed.odeme, fiyat:$("edFiyat").value.trim(), para:ed.para } };
   fetch(CONFIG.api, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body) })
     .then(function(r){ return r.json(); })
     .then(function(j){
@@ -471,6 +550,7 @@ $("f").addEventListener("submit", function(e){
   if (!marka) { err.textContent = "Marka seçin ya da yazın."; return; }
   if (!model) { err.textContent = "Modeli yazın."; return; }
   if (!islem) { err.textContent = "İşlem / parça seçin ya da yazın."; return; }
+  if (YON_ON && !state.yon) { err.textContent = "\"Ne oldu?\" seçin."; return; }
   if (!state.durum) { err.textContent = "Durum seçin (Ödendi / Ödenmedi)."; return; }
 
   var E = CONFIG.entries, p = new URLSearchParams();
@@ -483,6 +563,7 @@ $("f").addEventListener("submit", function(e){
   var ac = $("aciklama").value.trim(); if (ac) { p.append(E.aciklama, ac); }
   var fy = $("fiyat").value.trim(); if (fy !== "") { p.append(E.fiyat, fy); p.append(E.para, state.para); }
   p.append(E.durum, state.durum);
+  if (YON_ON) { p.append(E.yon, state.yon); }
   p.append("fvv","1"); p.append("pageHistory","0");
 
   var btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Gönderiliyor...";
@@ -497,7 +578,7 @@ $("f").addEventListener("submit", function(e){
     if (finished) return; finished = true; document.body.removeChild(fm);
     var d = new Date(), z = function(n){ return (n<10?"0":"")+n; };
     addPending({ tarih: z(d.getDate())+"."+z(d.getMonth()+1)+"."+d.getFullYear()+" "+z(d.getHours())+":"+z(d.getMinutes())+":"+z(d.getSeconds()),
-                 kimden: CONFIG.kimden, marka: marka, model: model, islem: islem, aciklama: ac, fiyat: fy, durum: state.durum, para: state.para });
+                 kimden: CONFIG.kimden, marka: marka, model: model, islem: islem, aciklama: ac, fiyat: fy, durum: state.durum, para: state.para, yon: state.yon });
     show("doneScreen");
   }
   fr.onload = ok;
